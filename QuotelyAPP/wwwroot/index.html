@@ -7,25 +7,80 @@
     <title>QuotelyAPP</title>
     <base href="/" />
     <link rel="stylesheet" href="css/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/app.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="QuotelyAPP.styles.css" rel="stylesheet" />
+    <style>
+        body {
+            margin: 0;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            border-bottom: 1px solid #ddd;
+            background: #fff;
+            font-family: Arial, sans-serif;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #444;
+        }
+
+        .links a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: #555;
+            font-size: 1rem;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+        }
+
+        .quote-card {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 20px 25px;
+            border-radius: 8px;
+            margin: 30px auto;
+        }
+
+        .quote-card blockquote {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+        }
+
+        .quote-card .author {
+            font-weight: bold;
+            color: #444;
+        }
+
+        .quote-card .tags span {
+            display: inline-block;
+            background: #eee;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 
 <body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
         <div class="loading-progress-text"></div>
     </div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

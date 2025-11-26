@@ -1,0 +1,44 @@
+﻿@page "/random"
+@using QuotelyAPP.Services
+@using QuotelyAPP.Models
+@inject QuoteService QuoteService
+
+<h2>Random Quote</h2>
+
+@if (quote == null)
+{
+    <p>Loading a quote...</p>
+}
+else
+{
+    <div class="quote-card">
+        <blockquote>"@quote.content"</blockquote>
+
+        <p class="author">— @quote.author</p>
+
+        <div class="tags">
+            @foreach (var tag in quote.tags)
+            {
+                <span>@tag</span>
+            }
+        </div>
+    </div>
+
+    <button class="btn btn-primary" @onclick="LoadQuote">
+        Show Another Quote
+    </button>
+}
+
+@code {
+    Quote? quote;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadQuote();
+    }
+
+    private async Task LoadQuote()
+    {
+        quote = await QuoteService.GetRandomQuote();
+    }
+}
