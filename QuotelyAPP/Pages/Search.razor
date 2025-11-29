@@ -1,0 +1,112 @@
+﻿@page "/search"
+
+@using QuotelyAPP.Models
+@using QuotelyAPP.Services
+@inject QuoteService QuoteService
+
+<h2>Search Quotes</h2>
+<p>Find the perfect words for any occasion</p>
+
+<div style="display:flex; gap:20px; margin-bottom:20px; max-width:900px;">
+    <input placeholder="Search by keyword (optional)"
+           @bind="keyword"
+           style="flex:1; padding:12px;" />
+
+    <input placeholder="Filter by author (type 3+ chars)"
+           @bind="author"
+           style="flex:1; padding:12px;" />
+
+    <select @bind="selectedTag"
+            style="flex:1; padding:12px;">
+        <option value="">Select a tag</option>
+
+        @foreach (var t in tags)
+        {
+            <option value="@t">@t</option>
+        }
+    </select>
+</div>
+
+
+<button @onclick="SearchQuotes"
+        style="width:900px; padding:14px; margin-bottom:30px;">
+     Search Quotes
+</button>
+
+@if (isLoading)
+{
+    <p>Searching...</p>
+}
+
+@if (!string.IsNullOrEmpty(error))
+{
+    <p>@error</p>
+}
+
+@if (results != null && results.results.Any())
+{
+    <h3>Results</h3>
+
+    @foreach (var q in results.results)
+    {
+        <div>
+            <blockquote>"@q.content"</blockquote>
+            <p>— @q.author</p>
+            <p>Tags: @string.Join(", ", q.tags)</p>
+        </div>
+    }
+}
+
+@code {
+    string keyword = "";
+    string author = "";
+    string selectedTag = "";
+    bool isLoading = false;
+    string? error;
+
+    QuoteSearchResult? results;
+
+    List<string> tags = new()
+    {
+        "wisdom", "life", "love", "happiness", "success", "friendship"
+    };
+
+    private async Task SearchQuotes()
+    {
+        isLoading = true;
+        error = null;
+
+        try
+        {
+            string query = BuildQuery();
+            results = await QuoteService.SearchQuotes(query, page: 1, limit: 10);
+
+            if (results == null || results.results.Count == 0)
+                error = "No quotes found.";
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private string BuildQuery()
+    {
+        List<string> filters = new();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+            filters.Add(keyword);
+
+        if (!string.IsNullOrWhiteSpace(author))
+            filters.Add($"author:{author}");
+
+        if (!string.IsNullOrWhiteSpace(selectedTag))
+            filters.Add($"tags:{selectedTag}");
+
+        return string.Join(" ", filters);
+    }
+}
+
