@@ -16,11 +16,25 @@ namespace QuotelyAPP.Services
         {
             return await _http.GetFromJsonAsync<Quote>("random");
         }
+        
         public async Task<QuoteSearchResult?> SearchQuotes(string query, int page = 1, int limit = 10)
         {
-            return await _http.GetFromJsonAsync<QuoteSearchResult>(
-                $"quotes?query={query}&page={page}&limit={limit}"
+            string encodedQuery = Uri.EscapeDataString(query);
+            string url = $"quotes?query={encodedQuery}&page={page}&limit={limit}";
+            return await _http.GetFromJsonAsync<QuoteSearchResult>(url);
+        }
+
+        public async Task<AuthorSearchResult?> SearchAuthors(string query, int page = 1, int limit = 100)
+        {
+            string encodedQuery = Uri.EscapeDataString(query);
+            return await _http.GetFromJsonAsync<AuthorSearchResult>(
+                $"authors?query={encodedQuery}&page={page}&limit={limit}"
             );
+        }
+
+        public async Task<List<Tag>?> GetTags()
+        {
+            return await _http.GetFromJsonAsync<List<Tag>>("tags");
         }
     }
 }

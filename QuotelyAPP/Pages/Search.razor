@@ -10,11 +10,28 @@
 <div style="display:flex; gap:20px; margin-bottom:20px; max-width:900px;">
     <input placeholder="Search by keyword (optional)"
            @bind="keyword"
+           @bind:event="oninput"
            style="flex:1; padding:12px;" />
 
-    <input placeholder="Filter by author (type 3+ chars)"
-           @bind="author"
-           style="flex:1; padding:12px;" />
+    <div style="flex:1; position:relative;">
+        <input placeholder="Filter by author (type 3+ chars)"
+               value="@author"
+               @oninput="OnAuthorInput"
+               style="width:100%; padding:12px;" />
+        
+        @if (authorSuggestions != null && authorSuggestions.Any() && author.Length >= 3)
+        {
+            <div style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; z-index:1000;">
+                @foreach (var a in authorSuggestions)
+                {
+                    <div @onclick="() => SelectAuthor(a.name)"
+                         style="padding:10px; cursor:pointer; border-bottom:1px solid #eee;">
+                        @a.name
+                    </div>
+                }
+            </div>
+        }
+    </div>
 
     <select @bind="selectedTag"
             style="flex:1; padding:12px;">
@@ -65,48 +82,180 @@
     string? error;
 
     QuoteSearchResult? results;
+    List<Author>? authorSuggestions;
+    List<string> tags = new();
 
-    List<string> tags = new()
+    protected override async Task OnInitializedAsync()
     {
-        "wisdom", "life", "love", "happiness", "success", "friendship"
-    };
+        await LoadTags();
+    }
+
+    private async Task LoadTags()
+    {
+        try
+        {
+            var tagList = await QuoteService.GetTags();
+            if (tagList != null)
+            {
+                tags = tagList
+                    .Where(t => !string.IsNullOrEmpty(t.name))
+                    .Select(t => t.name!)
+                    .OrderBy(t => t)
+                    .ToList();
+            }
+        }
+        catch
+        {
+            tags = new List<string>();
+        }
+    }
 
     private async Task SearchQuotes()
     {
         isLoading = true;
         error = null;
+        results = null;
+        StateHasChanged();
 
         try
         {
-            string query = BuildQuery();
-            results = await QuoteService.SearchQuotes(query, page: 1, limit: 10);
+            if (string.IsNullOrWhiteSpace(keyword) && 
+                string.IsNullOrWhiteSpace(author) && 
+                string.IsNullOrWhiteSpace(selectedTag))
+            {
+                error = "Please enter a search term, author, or select a tag.";
+                isLoading = false;
+                StateHasChanged();
+                return;
+            }
+            
+            List<Quote> allQuotes = new List<Quote>();
+            
+            for (int page = 1; page <= 10; page++)
+            {
+                var response = await QuoteService.SearchQuotes("", page: page, limit: 150);
+                
+                if (response?.results == null || !response.results.Any())
+                    break;
+                
+                allQuotes.AddRange(response.results);
+                
+                if (response.results.Count < 150)
+                    break;
+            }
+            
+            if (allQuotes.Count == 0)
+            {
+                error = "No response from API.";
+                isLoading = false;
+                StateHasChanged();
+                return;
+            }
+            
+            var filteredResults = allQuotes.AsEnumerable();
+            
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                string keywordLower = keyword.ToLowerInvariant();
+                filteredResults = filteredResults
+                    .Where(q => q.content != null && q.content.ToLowerInvariant().Contains(keywordLower));
+            }
+            
+            if (!string.IsNullOrWhiteSpace(author))
+            {
+                string authorLower = author.ToLowerInvariant();
+                filteredResults = filteredResults
+                    .Where(q => q.author != null && q.author.ToLowerInvariant().Contains(authorLower));
+            }
+            
+            if (!string.IsNullOrWhiteSpace(selectedTag))
+            {
+                filteredResults = filteredResults
+                    .Where(q => q.tags != null && q.tags.Any(t => t != null && t.Equals(selectedTag, StringComparison.OrdinalIgnoreCase)));
+            }
+            
+            var filteredList = filteredResults.ToList();
+            results = new QuoteSearchResult
+            {
+                results = filteredList,
+                count = filteredList.Count,
+                totalCount = filteredList.Count,
+                page = 1,
+                totalPages = 1
+            };
 
-            if (results == null || results.results.Count == 0)
-                error = "No quotes found.";
+            if (results.results == null || results.results.Count == 0)
+            {
+                error = "No quotes found matching your search.";
+                results = null;
+            }
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error = $"Error: {ex.Message}";
+            results = null;
         }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
 
-        isLoading = false;
+    private async Task OnAuthorInput(ChangeEventArgs e)
+    {
+        author = e.Value?.ToString() ?? "";
+        
+        if (author.Length >= 3)
+        {
+            try
+            {
+                List<Author> allAuthors = new List<Author>();
+                
+                for (int page = 1; page <= 10; page++)
+                {
+                    var result = await QuoteService.SearchAuthors("", page: page, limit: 100);
+                    
+                    if (result?.results == null || !result.results.Any())
+                        break;
+                    
+                    allAuthors.AddRange(result.results);
+                    
+                    if (result.results.Count < 100)
+                        break;
+                }
+                
+                if (allAuthors.Any())
+                {
+                    string authorLower = author.ToLowerInvariant();
+                    authorSuggestions = allAuthors
+                        .Where(a => a.name != null && a.name.ToLowerInvariant().Contains(authorLower))
+                        .Take(10)
+                        .ToList();
+                }
+                else
+                {
+                    authorSuggestions = null;
+                }
+            }
+            catch
+            {
+                authorSuggestions = null;
+            }
+        }
+        else
+        {
+            authorSuggestions = null;
+        }
+        
         StateHasChanged();
     }
 
-    private string BuildQuery()
+    private void SelectAuthor(string authorName)
     {
-        List<string> filters = new();
-
-        if (!string.IsNullOrWhiteSpace(keyword))
-            filters.Add(keyword);
-
-        if (!string.IsNullOrWhiteSpace(author))
-            filters.Add($"author:{author}");
-
-        if (!string.IsNullOrWhiteSpace(selectedTag))
-            filters.Add($"tags:{selectedTag}");
-
-        return string.Join(" ", filters);
+        author = authorName;
+        authorSuggestions = null;
+        StateHasChanged();
     }
 }
 
