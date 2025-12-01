@@ -3,6 +3,8 @@
 @using QuotelyAPP.Models
 @using QuotelyAPP.Services
 @inject QuoteService QuoteService
+@inject FavoritesService FavoritesService
+@using System.Linq
 
 <h2>Search Quotes</h2>
 <p>Find the perfect words for any occasion</p>
@@ -66,10 +68,25 @@
 
     @foreach (var q in results.results)
     {
-        <div>
-            <blockquote>"@q.content"</blockquote>
-            <p>— @q.author</p>
-            <p>Tags: @string.Join(", ", q.tags)</p>
+        var currentQuote = q;
+        var quoteId = currentQuote._id ?? "";
+        var isFavorite = favoriteQuotes.ContainsKey(quoteId) && favoriteQuotes[quoteId];
+        
+        <div style="position:relative; margin-bottom:20px; padding:20px; padding-bottom:50px; border:1px solid #ddd; border-radius:8px;">
+            <blockquote>"@currentQuote.content"</blockquote>
+            <p>— @currentQuote.author</p>
+            <p>Tags: @string.Join(", ", currentQuote.tags ?? new List<string>())</p>
+            
+            <button style="position:absolute; bottom:15px; right:15px; background:none; border:none; cursor:pointer; font-size:24px; padding:5px;" @onclick="() => ToggleFavorite(currentQuote)">
+                @if (isFavorite)
+                {
+                    <span style="color:red;">♥</span>
+                }
+                else
+                {
+                    <span style="color:#ccc;">♡</span>
+                }
+            </button>
         </div>
     }
 }
@@ -84,6 +101,7 @@
     QuoteSearchResult? results;
     List<Author>? authorSuggestions;
     List<string> tags = new();
+    Dictionary<string, bool> favoriteQuotes = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -184,6 +202,9 @@
                 totalPages = 1
             };
 
+            // Check favorites for all results
+            await UpdateFavoriteStatus();
+
             if (results.results == null || results.results.Count == 0)
             {
                 error = "No quotes found matching your search.";
@@ -199,6 +220,21 @@
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task UpdateFavoriteStatus()
+    {
+        if (results?.results == null)
+            return;
+
+        favoriteQuotes.Clear();
+        foreach (var quote in results.results)
+        {
+            if (quote._id != null)
+            {
+                favoriteQuotes[quote._id] = await FavoritesService.IsFavoriteAsync(quote);
+            }
         }
     }
 
@@ -255,6 +291,16 @@
     {
         author = authorName;
         authorSuggestions = null;
+        StateHasChanged();
+    }
+
+    private async Task ToggleFavorite(Quote quote)
+    {
+        if (quote?._id == null)
+            return;
+
+        await FavoritesService.ToggleFavoriteAsync(quote);
+        favoriteQuotes[quote._id] = await FavoritesService.IsFavoriteAsync(quote);
         StateHasChanged();
     }
 }

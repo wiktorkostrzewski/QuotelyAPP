@@ -10,4 +10,5 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient{BaseAddress = new Uri("https://api.quotable.io/")});
 
 builder.Services.AddScoped<QuoteService>();
+builder.Services.AddScoped<FavoritesService>();
 await builder.Build().RunAsync();

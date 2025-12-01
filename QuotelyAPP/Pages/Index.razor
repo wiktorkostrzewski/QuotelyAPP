@@ -3,6 +3,7 @@
 @using QuotelyAPP.Services
 @using QuotelyAPP.Models
 @inject QuoteService QuoteService
+@inject FavoritesService FavoritesService
 
 <h2>Random Quote</h2>
 
@@ -12,17 +13,28 @@
 }
 else
 {
-    <div class="quote-card">
+    <div class="quote-card" style="position:relative; padding-bottom:40px;">
         <blockquote>"@quote.content"</blockquote>
 
         <p class="author">— @quote.author</p>
 
         <div class="tags">
-            @foreach (var tag in quote.tags)
+            @foreach (var tag in quote.tags ?? new List<string>())
             {
                 <span>@tag</span>
             }
         </div>
+
+        <button style="position:absolute; bottom:15px; right:15px; background:none; border:none; cursor:pointer; font-size:24px; padding:5px;" @onclick="ToggleFavorite">
+            @if (isFavorite)
+            {
+                <span style="color:red;">♥</span>
+            }
+            else
+            {
+                <span style="color:#ccc;">♡</span>
+            }
+        </button>
     </div>
 
     <button class="btn btn-primary" @onclick="LoadQuote">
@@ -32,6 +44,7 @@ else
 
 @code {
     Quote? quote;
+    bool isFavorite = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,5 +54,20 @@ else
     private async Task LoadQuote()
     {
         quote = await QuoteService.GetRandomQuote();
+        if (quote != null)
+        {
+            isFavorite = await FavoritesService.IsFavoriteAsync(quote);
+        }
+        StateHasChanged();
+    }
+
+    private async Task ToggleFavorite()
+    {
+        if (quote != null)
+        {
+            await FavoritesService.ToggleFavoriteAsync(quote);
+            isFavorite = await FavoritesService.IsFavoriteAsync(quote);
+            StateHasChanged();
+        }
     }
 }
