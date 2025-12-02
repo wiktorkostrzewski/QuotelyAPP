@@ -5,42 +5,53 @@
 @inject QuoteService QuoteService
 @inject FavoritesService FavoritesService
 
-<h2>Random Quote</h2>
+<div class="quote-page">
+    <h2>Daily Inspiration</h2>
 
-@if (quote == null)
-{
-    <p>Loading a quote...</p>
-}
-else
-{
-    <div class="quote-card" style="position:relative; padding-bottom:40px;">
-        <blockquote>"@quote.content"</blockquote>
+    @if (quote == null)
+    {
+        <p>Loading a quote...</p>
+    }
+    else
+    {
+        <div class="quote-card" style="position:relative; padding-bottom:40px;">
+            <blockquote>"@quote.content"</blockquote>
 
-        <p class="author">— @quote.author</p>
+            <p class="author">— @quote.author</p>
 
-        <div class="tags">
-            @foreach (var tag in quote.tags ?? new List<string>())
-            {
-                <span>@tag</span>
-            }
+            <div class="tags">
+                @foreach (var tag in quote.tags ?? new List<string>())
+                {
+                    <span>@tag</span>
+                }
+            </div>
+
+            <button class="favorite-btn" style="position:absolute; bottom:15px; right:15px; background:none; border:none; cursor:pointer; padding:5px;" @onclick="ToggleFavorite">
+                @if (isFavorite)
+                {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="#C85A5A" stroke="#C85A5A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                }
+                else
+                {
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6B5B4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                }
+            </button>
         </div>
 
-        <button style="position:absolute; bottom:15px; right:15px; background:none; border:none; cursor:pointer; font-size:24px; padding:5px;" @onclick="ToggleFavorite">
-            @if (isFavorite)
-            {
-                <span style="color:red;">♥</span>
-            }
-            else
-            {
-                <span style="color:#ccc;">♡</span>
-            }
+        <button class="btn btn-primary show-another-btn" @onclick="LoadQuote" style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <polyline points="1 20 1 14 7 14"></polyline>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Show Another Quote</span>
         </button>
-    </div>
-
-    <button class="btn btn-primary" @onclick="LoadQuote">
-        Show Another Quote
-    </button>
-}
+    }
+</div>
 
 @code {
     Quote? quote;

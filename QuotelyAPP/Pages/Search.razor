@@ -148,6 +148,7 @@
             }
             
             List<Quote> allQuotes = new List<Quote>();
+            HashSet<string> seenIds = new HashSet<string>();
             
             for (int page = 1; page <= 10; page++)
             {
@@ -156,7 +157,15 @@
                 if (response?.results == null || !response.results.Any())
                     break;
                 
-                allQuotes.AddRange(response.results);
+                // Only add quotes we haven't seen before
+                foreach (var quote in response.results)
+                {
+                    if (quote._id != null && !seenIds.Contains(quote._id))
+                    {
+                        allQuotes.Add(quote);
+                        seenIds.Add(quote._id);
+                    }
+                }
                 
                 if (response.results.Count < 150)
                     break;
