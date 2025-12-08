@@ -13,10 +13,10 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
@@ -39,7 +39,7 @@ jobs:
       run: dotnet publish QuotelyAPP/QuotelyAPP/QuotelyAPP.csproj -c Release -o output
 
     - name: Upload artifact for deployment
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: blazor-build
         path: output/wwwroot
