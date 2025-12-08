@@ -98,7 +98,7 @@
     @if (results != null && results.results.Any())
     {
         <div class="search-results">
-            @foreach (var q in results.results)
+            @foreach (var q in paginatedResults)
             {
                 var currentQuote = q;
                 var quoteId = currentQuote._id ?? "";
@@ -135,6 +135,27 @@
                 </div>
             }
         </div>
+
+        @if (totalPages > 1)
+        {
+            <div class="pagination">
+                <button class="pagination-btn" @onclick="PreviousPage" disabled="@(currentPage == 1)">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    <span>Previous</span>
+                </button>
+                
+                <span class="pagination-info">Page @currentPage of @totalPages</span>
+                
+                <button class="pagination-btn" @onclick="NextPage" disabled="@(currentPage == totalPages)">
+                    <span>Next</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+        }
     }
 </div>
 
@@ -150,6 +171,24 @@
     List<string> tags = new();
     Dictionary<string, bool> favoriteQuotes = new();
     bool isTagDropdownOpen = false;
+
+    int currentPage = 1;
+    int itemsPerPage = 10;
+    int totalPages => results?.results != null ? (int)Math.Ceiling(results.results.Count / (double)itemsPerPage) : 1;
+    
+    List<Quote> paginatedResults
+    {
+        get
+        {
+            if (results?.results == null || !results.results.Any())
+                return new List<Quote>();
+            
+            return results.results
+                .Skip((currentPage - 1) * itemsPerPage)
+                .Take(itemsPerPage)
+                .ToList();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -190,6 +229,7 @@
         isLoading = true;
         error = null;
         results = null;
+        currentPage = 1; // Reset to first page on new search
         StateHasChanged();
 
         try
@@ -387,6 +427,24 @@
         if (isTagDropdownOpen)
         {
             isTagDropdownOpen = false;
+            StateHasChanged();
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            StateHasChanged();
+        }
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
             StateHasChanged();
         }
     }
