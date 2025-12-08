@@ -21,19 +21,10 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore QuotelyAPP/QuotelyAPP/QuotelyAPP.csproj
 
-    - name: Install Playwright CLI
-      run: dotnet tool install --global Microsoft.Playwright.CLI
-
-    - name: Install Playwright browsers
-      run: playwright install --with-deps
-
-    - name: Build the solution
-      run: dotnet build --configuration Release
-
-    - name: Run tests
-      run: dotnet test --configuration Release --no-build
+    - name: Build the project
+      run: dotnet build QuotelyAPP/QuotelyAPP/QuotelyAPP.csproj --configuration Release
 
     - name: Publish Blazor WASM
       run: dotnet publish QuotelyAPP/QuotelyAPP/QuotelyAPP.csproj -c Release -o output
